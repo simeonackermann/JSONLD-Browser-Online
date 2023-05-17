@@ -9,7 +9,10 @@
     "gh-pages": "git subtree push --prefix dist origin gh-pages"
   },
   "dependencies": {
-    "json-ld-browser": "github:simeonackermann/jsonld-browser",
+    "bulma": "^0.9.4",
+    "codejar": "^3.7.0",
+    "highlight.js": "^11.8.0",
+    "json-ld-browser": "file:../JSONLD-Browser",
     "vue": "^3.2.47"
   },
   "devDependencies": {

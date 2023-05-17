@@ -1,0 +1,96 @@
+{
+    "@context": {
+        "dc11": "http://purl.org/dc/elements/1.1/",
+        "ex": "http://example.org/vocab#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#"
+    },
+    "@graph": [
+        {
+            "@type": "Person",
+            "@id": "http://example.org/#jane",
+            "name": "Jane Doe",
+            "alternateName": "Jason Doe Doe",
+            "boolean": false,
+            "age": 99,
+            "IQ": 0.001,
+            "nationality": "Atlanta",
+            "isNull": null,
+            "birthPlace": {
+                "@id": "http://example.org/place/AtlantaCity",
+                "@type": "Place",
+                "address": {
+                    "@type": "PostalAddress",
+                    "addressLocality": "Atlanta",
+                    "addressRegion": "ATL",
+                    "addressCountry": "Atlanta City"
+                }
+            },
+            "http://schema.org/telephone": [
+                {
+                  "@value": "(425) 123-4567"
+                }
+              ],
+            "http://schema.org/voc#livesIn": [
+                {
+                    "@id": "http://example.or/leipzig"
+                },
+                {
+                  "@id": "http://example.or/berlin"
+              }
+            ],
+            "gender": "Other",
+            "friend": "http://example.org/#max",
+            "Description": "Technologist",
+            "worksFor": [
+                {
+                    "@type": "Organization",
+                    "name": "Atlanta Rework Works Group Inc.",
+                    "sameAs": [
+                        "http://example.org/#atlreworks",
+                        "http://example.com/#atlreworks"
+                    ]
+                }
+            ],
+            "ex:favoriteBook": "http://example.org/library/the-republic",
+            "website": "http://examplejane-online.org/",
+            "sameAs": [
+                "http://example.de/#jane",
+                "http://example.com/#jane"
+            ]
+        },
+        {
+            "@type": "Person",
+            "@id": "http://example.org/#max",
+            "name": "Max Mustermann",
+            "friend": "http://example.org/#jane"
+        },
+        {
+            "@id": "http://example.or/leipzig",
+            "@type": [
+                "http://schema.org/City",
+                "http://schema.org/Class"
+            ],
+            "http://schema.org/name": [
+                {
+                    "@value": "Leipzig"
+                }
+            ],
+            "http://schema.org/inhabits": [
+                {
+                    "@id": "http://example.org/#jane"
+                }
+            ]
+        },
+        {
+            "@id": "http://example.or/berlin",
+            "@type": [
+                "http://schema.org/City"
+            ],
+            "http://schema.org/name": [
+                {
+                    "@value": "Berlin"
+                }
+            ]
+        }
+    ]
+}

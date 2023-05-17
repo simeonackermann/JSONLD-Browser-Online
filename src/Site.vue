@@ -1,15 +1,43 @@
 <script setup>
-import { reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 
-import testData from './assets/test-data.json'
+import JSONLDBrowser from 'json-ld-browser'
 
-import { JSONLDBrowser } from 'json-ld-browser'
+import 'bulma/css/bulma.css'
+
+import {CodeJar} from 'codejar'
+
+import 'highlight.js/styles/default.css';
+import hljs from 'highlight.js/lib/core';
+import hljsJson from 'highlight.js/lib/languages/json';
+hljs.registerLanguage('json', hljsJson);
+hljs.configure({ignoreUnescapedHTML: true})
+
+const jarEl = ref(null)
+
 
 const state = reactive({
-  data: testData,
-  renderBrowser: true
-  // dataFile: "../public/test-data.json"
+  data: null,
+  currentExample: null
 })
+
+const loadExample = async (id) => {
+  let json = null
+
+  try {
+    const res = await fetch(`/data/${id}.json`)
+    json = await res.json()
+  } catch (error) {
+    console.log('Error', error);
+    return
+  }
+
+  state.currentExample = id
+  state.data = json
+  setTimeout(() => {
+    updateSyntaxHighlighting()
+  }, 1)
+}
 
 const handleFileUpload = e => {
   const file = e.target.files[0]
@@ -17,21 +45,40 @@ const handleFileUpload = e => {
   var fr = new FileReader();
   fr.readAsText(file);
   fr.onload = function() {
-      try {
-        const json = JSON.parse(fr.result)
-        state.renderBrowser = false
-        // Hack to re-reander component
-        setTimeout(() => {
-          state.data = json
-          state.renderBrowser = true
-        }, 1);
-      } catch (error) {
-        throw error
-      }
+    try {
+      state.data = JSON.parse(fr.result)
+      state.currentExample = null
+      setTimeout(() => {
+          updateSyntaxHighlighting()
+        }, 1)
+    } catch (error) {
+      throw error
+    }
   };
   fr.onerror = function() {
       console.log("Error reading the file");
   };
+}
+
+const updateSyntaxHighlighting = () => {
+  let updateBrowserTimeout = null
+
+  const updateBrowser = (code) => {
+    try {
+      state.data = JSON.parse(code)
+    } catch (error) {
+      console.log('Error:', error);
+    }
+  }
+
+  let jar = CodeJar(jarEl.value, hljs.highlightElement)
+
+  jar.onUpdate(code => {
+    clearTimeout(updateBrowserTimeout)
+    updateBrowserTimeout = setTimeout(() => {
+      updateBrowser(code)
+    }, 750)
+  });
 }
 
 </script>
@@ -39,52 +86,67 @@ const handleFileUpload = e => {
 <template>
   <div class="header">
         <a href="">
-            <img src="/favicon.png" alt="Logo" />
-            JSON-LD Browser Online
+            <img src="/logo.png" alt="Logo" />
+            JSON-LD Browser
           </a>
-
-        <!-- <ul class="pure-menu-list">
-            <li class="pure-menu-item pure-menu-selected"><a href="#" class="pure-menu-link">Home</a></li>
-            <li class="pure-menu-item"><a href="#" class="pure-menu-link">Tour</a></li>
-            <li class="pure-menu-item"><a href="#" class="pure-menu-link">Sign Up</a></li>
-        </ul> -->
   </div>
 
-  <!-- <div class="splash-container">
-    <div class="splash">
-        <h1 class="splash-head">Big Bold Text</h1>
-        <p class="splash-subhead">
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit.
-        </p>
-        <p>
-            <a href="http://purecss.io" class="pure-button pure-button-primary">Get Started</a>
-        </p>
-    </div>
-  </div> -->
-
   <div class="content-wrapper">
-
-
     <div id="toolbox">
-      <div class="upload-form">
-        <label class="button" for="file">Upload JSON-LD</label>
-        <input type="file" accept=".json" @change="handleFileUpload" class="file" id="file">
-      </div>
+      <div class="field is-horizontal">
+        <div class="field-label is-normal">
+          <label class="label">Examples</label>
+        </div>
+        <div class="field-body">
+          <div class="field is-grouped">
 
-      <!-- <div class="file-input">
-        <input type="file" id="file" class="file">
-        <label for="file">Choose a</label>
-        <p class="file-name"></p>
-      </div> -->
+            <div class="control">
+              <a class="button" v-bind:class="{'is-light': state.currentExample == 'bibliothek' }" @click="loadExample('bibliothek')">Bibliothek</a>
+            </div>
+
+            <div class="control">
+              <a class="button" v-bind:class="{'is-light': state.currentExample == 'jane' }" @click="loadExample('jane')">Jane Doe</a>
+            </div>
+
+            <div class="control">
+              or
+            </div>
+
+            <div class="control file">
+              <label class="file-label">
+                <input class="file-input" type="file" name="file" accept=".json" @change="handleFileUpload">
+                <span class="file-cta">
+                  <span class="file-icon">
+                    <span class="material-symbols-outlined">upload_file</span>
+                  </span>
+                  <span class="file-label">
+                    Upload JSON-LD....
+                  </span>
+                </span>
+              </label>
+            </div>
+
+          </div>
+        </div>
+      </div>
     </div>
 
-    <main id="jsonld-browser" >
-    <JSONLDBrowser
-      v-if="state.renderBrowser"
-      :data="state.data"
-      :data-file="state.data === null ? state.dataFile : ''"
-    />
-  </main>
+    <h2 class="subtitle">
+      <span class="material-symbols-outlined">Code</span> JSON-LD Input
+    </h2>
+    <div id="jsonld-code" class="language-json" ref="jarEl">
+      {{ state.data }}
+    </div>
+
+    <h2 class="subtitle">
+      <span class="material-symbols-outlined">description</span> JSON-LD Visualisation
+    </h2>
+    <div id="jsonld-browser" >
+      <JSONLDBrowser
+        :data="state.data"
+        :data-file="state.dataFile"
+      />
+    </div>
 
   </div>
 
@@ -93,34 +155,47 @@ const handleFileUpload = e => {
 <style scoped>
 
 .header {
-  /* background: hsla(160, 100%, 37%, 1); */
-  background: rgb(23,254,162);
-background: linear-gradient(27deg, rgba(23,254,162,1) 0%, rgba(0,189,126,1) 51%, rgba(0,69,46,1) 100%);
+
+  background-image:
+    linear-gradient(90deg,
+          #3a91e280 50%,
+          #13344780 50%
+          )
+    ,linear-gradient(0deg,
+          #3a91e280 50%,
+          #13344780 50%
+          )
+    ,linear-gradient(45deg,
+          #3a91e280 50%,
+          #13344780 50%
+          );
+
+  background-size: 60px 60px;
+
   height: 60px;
-  border-bottom: 2px solid gray;
+  display: flex;
+  justify-content: center;
 
 }
 
 .header img {
-  height: 50px;
-  margin: 5px;
+  height: 42px;
+  margin: 5px 15px;
+  border-radius: 21px;
+  box-shadow: 0px 0px 10px 0px #f1f1f1;
+  background: white;
+    padding: 1px;
 }
 
 .header a {
-  color: var(--vt-c-black-soft);
-  font-weight: 400;
+  color: var(--vt-c-white-soft);
+  text-shadow: 0px 0px 5px #f1f1f1;
+  font-weight: 600;
   line-height: 1.25;
-  font-size: 1.5rem;
+  font-size: 2rem;
+  letter-spacing: .25rem;
   display: flex;
   align-items: center;
-}
-
-.home-menu {
-  /* background: #65beff; */
-}
-
-.pure-menu-heading {
-  color: #fffbf3
 }
 
 .content-wrapper {
@@ -133,10 +208,21 @@ background: linear-gradient(27deg, rgba(23,254,162,1) 0%, rgba(0,189,126,1) 51%,
   padding: 1rem;
 }
 
-main#jsonld-browser {
-  height: calc(100vh - 8rem);
+div#jsonld-code {
+  max-height: 250px;
+  min-height: 50px;
+  box-shadow: 0 0 2px 2px #dfdfdf;
+  overflow: hidden;
+  overflow-y: scroll;
+  margin: 0 0 20px 0;
+  font-size: .875em;
+}
+
+
+div#jsonld-browser {
+  height: calc(100vh - 10rem);
   min-height: 200px;
-  margin: 0 auto;
+  margin: 0 auto 10px auto;
 }
 
 .upload-form label {
@@ -148,47 +234,50 @@ input[type=file] {
   font-size: 15px;
 }
 
-/* .file {
-  opacity: 0;
-  width: 0.1px;
-  height: 0.1px;
-  position: absolute;
-}
-
-.file-input label {
-  display: block;
-  position: relative;
-  width: 200px;
-  height: 50px;
-  border-radius: 25px;
-  background: linear-gradient(40deg, #ff6ec4, #7873f5);
-  box-shadow: 0 4px 7px rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-weight: bold;
-  cursor: pointer;
-  transition: transform .2s ease-out;
-}
-
-input:hover + label,
-input:focus + label {
-  transform: scale(1.02);
-}
-
-.file-name {
-  position: absolute;
-  bottom: -35px;
-  left: 10px;
-  font-size: 0.85rem;
-  color: #555;
-} */
 
 @media (min-width: 1280px) {
   .header {
     padding: 0 1%;
   }
+}
+
+</style>
+
+<style>
+.code-viewer pre {
+  padding: 0;
+}
+/* reset Bulma style for .number */
+.node-value.number {
+    background-color: inherit;
+    font-size: inherit;
+    height: inherit;
+    padding: inherit;
+    justify-content: inherit;
+
+
+}
+
+/* viewer-menu */
+#jsonld-browser {
+
+}
+
+#jsonld-browser .viewer-wrapper:has(.editor-viewer) .viewer-menu {
+  right: 50px;
+}
+
+#jsonld-browser .viewer-menu .button {
+  font-size: 0.6rem !important;
+
+}
+#jsonld-browser .editor-menu {
+
+  top: -24px;
+}
+#jsonld-browser .editor-menu .button {
+  font-size: 0.6rem !important;
+
 }
 
 </style>

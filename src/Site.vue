@@ -25,7 +25,7 @@ const loadExample = async (id) => {
   let json = null
 
   try {
-    const res = await fetch(`/data/${id}.json`)
+    const res = await fetch(`./data/${id}.json`)
     json = await res.json()
   } catch (error) {
     console.log('Error', error);

@@ -183,8 +183,7 @@ const updateSyntaxHighlighting = () => {
   margin: 5px 15px;
   border-radius: 21px;
   box-shadow: 0px 0px 10px 0px #f1f1f1;
-  background: white;
-    padding: 1px;
+  padding: 1px;
 }
 
 .header a {
